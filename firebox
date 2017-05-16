@@ -60,7 +60,7 @@ echo " _________________________________________________________________/\/\/\/\
 echo ""
 echo ${White}$x_
 echo ""
-echo "${BBlue}[+][INFO]:: Start FireBox Sandboxed over tor with Proxychains  "
+echo "${BBlue}[+][INFO]:: Start FireBox Sandboxed "
 echo "${White}"
 
 if [[ ! -e /opt/.FireBox ]]; then
