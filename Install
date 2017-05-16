@@ -78,7 +78,7 @@ fi
 
 
 if [ $(which tor) ]; then
-    echo ' tor is installed ::${Green} [Sweet]'
+    echo " tor is installed ::${Green} [Sweet]"
  echo "${BWhite}"
 
   else 
@@ -86,13 +86,14 @@ if [ $(which tor) ]; then
 
 apt-get install tor -y
 
- echo 'tor is now installed::${Green} [Success]'
+ echo "tor is now installed::${Green} [Success]"
  echo "${BWhite}"
 
   fi
 
 if [ $(which proxychains) ]; then
-    echo '[Sweet] proxychains is installed'
+    echo " proxychains is installed ::${Green} [Sweet]"
+    echo "${BWhite}"
 
   else 
 
@@ -100,12 +101,13 @@ if [ $(which proxychains) ]; then
 apt-get install proxychains -y
 bak_proxychains
 mv proxychains.conf /etc/proxychains.conf
- echo '[Success] proxychains is now installed'
+ echo " proxychains is now installed ::${Green} [Success]"
+ echo "${BWhite}"
   fi
 
 if [ $(which dnscrypt-proxy) ]; then
 
-    echo 'dnscrypt-proxy is installed ::${Green} [Sweet]'
+    echo "dnscrypt-proxy is installed ::${Green} [Sweet]"
  echo "${BWhite}"
 
   else
@@ -113,7 +115,7 @@ if [ $(which dnscrypt-proxy) ]; then
 
 apt-get install dnscrypt-proxy -y
 
-    echo ' dnscrypt-proxy is now installed ::${Green} [Success]'
+    echo "dnscrypt-proxy is now installed ::${Green} [Success]"
  echo "${BWhite}"
 
 #    echo 'you need to configure you reseau to use dnscrypt-proxy (add : 127.0.0.1 && ::1 )'
@@ -127,7 +129,7 @@ service dnscrypt-proxy restart
 
 if [ $(which privoxy) ]; then
 
-    echo 'privoxy is installed ::${Green} [Sweet]'
+    echo "privoxy is installed ::${Green} [Sweet]"
  echo "${BWhite}"
 
   else
@@ -137,7 +139,7 @@ apt-get install privoxy -y
 bak_privoxy
 mv config /etc/privoxy/config
 
-    echo 'privoxy is now installed ::${Green} [Success]'
+    echo "privoxy is now installed ::${Green} [Success]"
     echo "${BWhite}"
 
 
@@ -145,7 +147,7 @@ mv config /etc/privoxy/config
 
 if [ $(which firejail) ]; then
 
-    echo 'firejail is installed ::${Green} [Sweet]'
+    echo "firejail is installed ::${Green} [Sweet]"
  echo "${BWhite}"
 
   else
@@ -155,7 +157,9 @@ git clone https://github.com/netblue30/firejail.git
 cd firejail
 ./configure && make && sudo make install-strip
 chmod +x /usr/bin/firejail
-    echo ' [Success] firejail is now installed'
+    echo "firejail is now installed ::${Green} [Success]"
+    echo "${BWhite}"
+    
     echo
 
    fi
@@ -171,7 +175,7 @@ check_tools
 
 if [ $(which firebox) ]; then
 
-    echo 'FireBox is installed ::${Green} [Sweet]'
+    echo "FireBox is installed ::${Green} [Sweet]"
  echo "${BWhite}"
 
   else
@@ -179,7 +183,7 @@ if [ $(which firebox) ]; then
 mv firebox /usr/bin/firebox
 chmod +x /usr/bin/firebox
 
-    echo 'FireBox is now installed::${Green} [Success]'
+    echo "FireBox is now installed::${Green} [Success]"
     echo "${BWhite}"
   
    fi
