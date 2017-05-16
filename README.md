@@ -7,10 +7,13 @@ Run Firefox Sandboxed ( with firejail) on tor ( with Proxychains - Privoxy - Dns
 Private Directory /opt/.FireBox/ 
 ______________________________________________________________________________________________
 
+## Download/Install/Config:
+
 cd /tmp && git clone https://github.com/bxlcity/firebox.git
 
 cd firebox && chmod +x Install && ./Install
 
+firebox
 ______________________________________________________________________________________________
 
 ## Dependencies
