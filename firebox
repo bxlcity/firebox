@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# COLORS {{{
+Bold=$(tput bold)
+Underline=$(tput sgr 0 1)
+Reset=$(tput sgr0)
+# Regular Colors
+Red=$(tput setaf 1)
+Green=$(tput setaf 2)
+Yellow=$(tput setaf 3)
+Blue=$(tput setaf 4)
+Purple=$(tput setaf 5)
+Cyan=$(tput setaf 6)
+White=$(tput setaf 7)
+# Bold
+BRed=${Bold}$(tput setaf 1)
+BGreen=${Bold}$(tput setaf 2)
+BYellow=${Bold}$(tput setaf 3)
+BBlue=${Bold}$(tput setaf 4)
+BPurple=${Bold}$(tput setaf 5)
+BCyan=${Bold}$(tput setaf 6)
+BWhite=${Bold}$(tput setaf 7)
+#}}}
+
+# =============================================================
+# FUNCTIONS
+# =============================================================
+
+  x_="______________________________________________________________________________"
+
+print_line() {
+  printf "%$(tput cols)s\n"|tr ' ' '*'
+}
+
+
+print_title() {
+  clear
+ print_line
+  echo -e "# ${Bold}$1${Reset}"
+  print_line
+  echo ""
+}
+
+
+
+pause(){
+  read -p "$*"
+}
+
+print_title "${BGreen}Welcome to FireBox Browser Quick Start\n"
+
+
+echo ""
+echo "${BWhite} _/\/\____________________/\/\________________/\/\______/\/\_________________ "
+echo " _/\/\________/\/\__/\/\__/\/\______/\/\/\/\__________/\/\/\/\/\__/\/\__/\/\_ "
+echo " _/\/\/\/\______/\/\/\____/\/\____/\/\________/\/\______/\/\______/\/\__/\/\_ "
+echo " _/\/\__/\/\____/\/\/\____/\/\____/\/\________/\/\______/\/\________/\/\/\/\_ "
+echo " _/\/\/\/\____/\/\__/\/\__/\/\/\____/\/\/\/\__/\/\/\____/\/\/\__________/\/\_ "
+echo " _________________________________________________________________/\/\/\/\___ "
+echo ""
+echo ${White}$x_
+echo ""
+echo "${BBlue}[+][INFO]:: Start FireBox Sandboxed over tor with Proxychains  "
+echo "${White}"
+
+if [[ ! -e /opt/.sandfox ]]; then
+            mkdir /opt/.sandfox
+fi
+
+p1=$(/etc/init.d/tor start)
+if [ "$p1" ]
+then
+        echo "${BWhite}[service tor ]::${Green} OK"
+else
+        echo "${BWhite}[service tor ]::${Red} ERROR"
+        exit
+fi
+echo 
+p2=$(/etc/init.d/privoxy start)
+if [ "$p2" ]
+then
+        echo "${BWhite}[service privoxy ]::${Green} OK"
+echo
+
+
+else
+        echo "${BWhite}[service privoxy ]::${Red} ERROR"
+        exit
+fi
+
+
+
+#firejail proxychains owasp-mantra-ff -no-remote
+p3T=$(firejail --private=/opt/.sandfox/ --dns=127.0.0.1 --dns=0.0.0.0 proxychains firefox -no-remote https://check.torproject.org/)
+if [ "$p3T" ]
+then
+       echo "${BWhite}[Sandfox is closed ]::${Green} OK"
+       echo "${BWhite}"
+echo "Private Dir /opt/.sandfox"
+nautilus /opt/.sandfox
+echo
+
+
+else
+        echo "${BWhite}[Start Sandfox ]::${Red} ERROR"
+        exit
+fi

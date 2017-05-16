@@ -1,0 +1,183 @@
+#!/bin/bash
+
+# COLORS {{{
+Bold=$(tput bold)
+Underline=$(tput sgr 0 1)
+Reset=$(tput sgr0)
+# Regular Colors
+Red=$(tput setaf 1)
+Green=$(tput setaf 2)
+Yellow=$(tput setaf 3)
+Blue=$(tput setaf 4)
+Purple=$(tput setaf 5)
+Cyan=$(tput setaf 6)
+White=$(tput setaf 7)
+# Bold
+BRed=${Bold}$(tput setaf 1)
+BGreen=${Bold}$(tput setaf 2)
+BYellow=${Bold}$(tput setaf 3)
+BBlue=${Bold}$(tput setaf 4)
+BPurple=${Bold}$(tput setaf 5)
+BCyan=${Bold}$(tput setaf 6)
+BWhite=${Bold}$(tput setaf 7)
+#}}}
+
+# =============================================================
+# FUNCTIONS
+# =============================================================
+
+  x_="______________________________________________________________________________"
+
+print_title "${BGreen}Install FireBox Start\n"
+
+
+
+echo ""
+echo "${BWhite} _/\/\____________________/\/\________________/\/\______/\/\_________________ "
+echo " _/\/\________/\/\__/\/\__/\/\______/\/\/\/\__________/\/\/\/\/\__/\/\__/\/\_ "
+echo " _/\/\/\/\______/\/\/\____/\/\____/\/\________/\/\______/\/\______/\/\__/\/\_ "
+echo " _/\/\__/\/\____/\/\/\____/\/\____/\/\________/\/\______/\/\________/\/\/\/\_ "
+echo " _/\/\/\/\____/\/\__/\/\__/\/\/\____/\/\/\/\__/\/\/\____/\/\/\__________/\/\_ "
+echo " _________________________________________________________________/\/\/\/\___ "
+echo ""
+echo ${White}$x_
+echo ""
+echo "${BBlue}[+][INFO]:: Install FireBox Start "
+echo "${White}"
+
+
+bak_proxychains()
+{
+    FILE="/etc/proxychains.conf"
+    if [ -f "$FILE" ] 
+    then mv "$FILE" "$FILE.bak"
+    fi
+}
+
+bak_privoxy()
+{
+    FILE="/etc/privoxy/config"
+    if [ -f "$FILE" ] 
+    then mv "$FILE" "$FILE.bak"
+    fi
+}
+
+
+check_tools(){
+
+apt-get update
+
+if [[ ! -e /opt/.sandfox ]]; then
+            mkdir /opt/.sandfox
+fi
+
+
+
+if [ $(which tor) ]; then
+    echo ' tor is installed ::${Green} [Sweet]'
+ echo "${BWhite}"
+
+  else 
+
+
+apt-get install tor -y
+
+ echo 'tor is now installed::${Green} [Success]'
+ echo "${BWhite}"
+
+  fi
+
+if [ $(which proxychains) ]; then
+    echo '[Sweet] proxychains is installed'
+
+  else 
+
+
+apt-get install proxychains -y
+bak_proxychains
+mv proxychains.conf /etc/proxychains.conf
+ echo '[Success] proxychains is now installed'
+  fi
+
+if [ $(which dnscrypt-proxy) ]; then
+
+    echo 'dnscrypt-proxy is installed ::${Green} [Sweet]'
+ echo "${BWhite}"
+
+  else
+
+
+apt-get install dnscrypt-proxy -y
+
+    echo ' dnscrypt-proxy is now installed ::${Green} [Success]'
+ echo "${BWhite}"
+
+#    echo 'you need to configure you reseau to use dnscrypt-proxy (add : 127.0.0.1 && ::1 )'
+service dnscrypt-proxy restart
+# echo 'Start dnscrypt-proxy CH '
+# echo'add cmd on terminal & enter'
+# echo 'dnscrypt-proxy -R cs-ch'
+    echo
+
+   fi
+
+if [ $(which privoxy) ]; then
+
+    echo 'privoxy is installed ::${Green} [Sweet]'
+ echo "${BWhite}"
+
+  else
+
+
+apt-get install privoxy -y
+bak_privoxy
+mv config /etc/privoxy/config
+
+    echo 'privoxy is now installed ::${Green} [Success]'
+    echo "${BWhite}"
+
+
+   fi
+
+if [ $(which firejail) ]; then
+
+    echo 'firejail is installed ::${Green} [Sweet]'
+ echo "${BWhite}"
+
+  else
+
+cd /tmp 
+git clone https://github.com/netblue30/firejail.git
+cd firejail
+./configure && make && sudo make install-strip
+chmod +x /usr/bin/firejail
+    echo ' [Success] firejail is now installed'
+    echo
+
+   fi
+}
+
+
+if [ "$(id -u)" != "0" ]; then
+   echo "This script must be run as root" 1>&2
+   exit 1
+fi
+
+check_tools
+
+if [ $(which firebox) ]; then
+
+    echo 'FireBox is installed ::${Green} [Sweet]'
+ echo "${BWhite}"
+
+  else
+
+mv firebox /usr/bin/firebox
+chmod +x /usr/bin/firebox
+
+    echo 'FireBox is now installed::${Green} [Success]'
+    echo "${BWhite}"
+  
+   fi
+
+
