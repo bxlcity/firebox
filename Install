@@ -22,6 +22,11 @@ BCyan=${Bold}$(tput setaf 6)
 BWhite=${Bold}$(tput setaf 7)
 #}}}
 
+print_line() {
+  printf "%$(tput cols)s\n"|tr ' ' '*'
+}
+
+
 print_title() {
   clear
  print_line
