@@ -100,7 +100,7 @@ if [ $(which proxychains) ]; then
 
 apt-get install proxychains -y
 bak_proxychains
-mv proxychains.conf /etc/proxychains.conf
+cp proxychains.conf /etc/proxychains.conf
  echo " proxychains is now installed ::${Green} [Success]"
  echo "${BWhite}"
   fi
@@ -137,7 +137,7 @@ if [ $(which privoxy) ]; then
 
 apt-get install privoxy -y
 bak_privoxy
-mv config /etc/privoxy/config
+cp config /etc/privoxy/config
 
     echo "privoxy is now installed ::${Green} [Success]"
     echo "${BWhite}"
@@ -180,7 +180,7 @@ if [ $(which firebox) ]; then
 
   else
 
-mv firebox /usr/bin/firebox
+cp firebox /usr/bin/firebox
 chmod +x /usr/bin/firebox
 
     echo "FireBox is now installed::${Green} [Success]"
