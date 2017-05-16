@@ -1,5 +1,7 @@
 # firebox
 
+![firebox](https://i.imgur.com/OFYT92U.png)
+
 Run Firefox Sandboxed ( with firejail) on tor ( with Proxychains - Privoxy - Dnscrypt-proxy )
 
 Private Directory /opt/.FireBox/ 
