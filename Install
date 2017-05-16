@@ -71,8 +71,8 @@ check_tools(){
 
 apt-get update
 
-if [[ ! -e /opt/.sandfox ]]; then
-            mkdir /opt/.sandfox
+if [[ ! -e /opt/.FireBox ]]; then
+            mkdir /opt/.FireBox
 fi
 
 
