@@ -96,8 +96,8 @@ if [ "$p3T" ]
 then
        echo "${BWhite}[Sandfox is closed ]::${Green} OK"
        echo "${BWhite}"
-echo "Private Dir /opt/.sandfox"
-nautilus /opt/.sandfox
+echo "Private Dir /opt/.FireBox/"
+nautilus /opt/.FireBox/
 echo
 
 
