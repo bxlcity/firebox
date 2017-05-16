@@ -63,8 +63,8 @@ echo ""
 echo "${BBlue}[+][INFO]:: Start FireBox Sandboxed over tor with Proxychains  "
 echo "${White}"
 
-if [[ ! -e /opt/.sandfox ]]; then
-            mkdir /opt/.sandfox
+if [[ ! -e /opt/.FireBox ]]; then
+            mkdir /opt/.FireBox
 fi
 
 p1=$(/etc/init.d/tor start)
@@ -91,7 +91,7 @@ fi
 
 
 #firejail proxychains owasp-mantra-ff -no-remote
-p3T=$(firejail --private=/opt/.sandfox/ --dns=127.0.0.1 --dns=0.0.0.0 proxychains firefox -no-remote https://check.torproject.org/)
+p3T=$(firejail --private=/opt/.FireBox/ --dns=127.0.0.1 --dns=0.0.0.0 proxychains firefox -no-remote https://check.torproject.org/)
 if [ "$p3T" ]
 then
        echo "${BWhite}[Sandfox is closed ]::${Green} OK"
