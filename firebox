@@ -1,6 +1,16 @@
 #!/bin/bash
 
-# COLORS {{{
+# =============================================================
+# CONFIGURATION
+# =============================================================
+
+
+# DNSCrypt = "adguard-dns-ns1"
+# DNSIp = "127.0.0.1"
+
+# =============================================================
+# COLORS
+# =============================================================
 Bold=$(tput bold)
 Underline=$(tput sgr 0 1)
 Reset=$(tput sgr0)
@@ -12,7 +22,10 @@ Blue=$(tput setaf 4)
 Purple=$(tput setaf 5)
 Cyan=$(tput setaf 6)
 White=$(tput setaf 7)
-# Bold
+# =============================================================
+# COLORS Bold
+# =============================================================
+
 BRed=${Bold}$(tput setaf 1)
 BGreen=${Bold}$(tput setaf 2)
 BYellow=${Bold}$(tput setaf 3)
@@ -20,7 +33,7 @@ BBlue=${Bold}$(tput setaf 4)
 BPurple=${Bold}$(tput setaf 5)
 BCyan=${Bold}$(tput setaf 6)
 BWhite=${Bold}$(tput setaf 7)
-#}}}
+
 
 # =============================================================
 # FUNCTIONS
@@ -42,13 +55,23 @@ print_title() {
 }
 
 
-
-pause(){
-  read -p "$*"
+helps() {
+ 
+echo "Usage : ${BGreen}firebox ${BWhite} ( start firefox sandboxed ) "
+echo "Options: ${BGreen}firebox -p ${BWhite} (to start firefox with proxychains sandboxed)"
+echo "${BGreen}firebox -o ${BWhite} ( to start owasp-mantra-ff sandboxed)"
+echo "${BGreen}firebox -g ${BWhite} ( to start google-chrome sandboxed)"
+echo "${BGreen}firebox -v ${BWhite} ( to start virtalbox sandboxed)"
+echo "${BGreen}firebox -d ${BWhite} ( to start dnscrypt-proxy sandboxed)"
+echo "${BGreen}firebox -t ${BWhite} ( to start terminal sandboxed )"
+echo "${BGreen}firebox -g ${BWhite} ( to start google-chrome sandboxed)"
+echo "${BGreen}firebox -h ${BWhite} ( to see help )"
 }
 
-print_title "${BGreen}Welcome to FireBox Browser Quick Start\n"
 
+about()
+{
+   print_title "${BGreen}Welcome to FireBox Browser Quick Start\n"
 
 echo ""
 echo "${BWhite} _/\/\____________________/\/\________________/\/\______/\/\_________________ "
@@ -60,48 +83,79 @@ echo " _________________________________________________________________/\/\/\/\
 echo ""
 echo ${White}$x_
 echo ""
-echo "${BBlue}[+][INFO]:: Start Firefox Sandboxed "
+echo "${BBlue}[+][INFO]::Start ${Cyan}Firefox  ${BGreen}Sandboxed "
 echo "${White}"
+}
+
+pause(){
+  read -p "$*"
+}
 
 if [[ ! -e /opt/.FireBox ]]; then
             mkdir /opt/.FireBox
 fi
 
-p1=$(/etc/init.d/tor start)
-if [ "$p1" ]
-then
-        echo "${BWhite}[service tor ]::${Green} OK"
-else
-        echo "${BWhite}[service tor ]::${Red} ERROR"
-        exit
-fi
+
+if [[ $1 == '-p' ]]; then
+
+about
+/etc/init.d/tor start
 echo 
-p2=$(/etc/init.d/privoxy start)
-if [ "$p2" ]
-then
-        echo "${BWhite}[service privoxy ]::${Green} OK"
+/etc/init.d/privoxy start
 echo
 
 
-else
-        echo "${BWhite}[service privoxy ]::${Red} ERROR"
-        exit
-fi
+firejail --private=/opt/.FireBox/ --dns=127.0.0.1 --profile=/usr/local/etc/firejail/firefox-esr.profile proxychains firefox -no-remote https://check.torproject.org/ 
 
-
-
-#firejail proxychains owasp-mantra-ff -no-remote
-p3T=$(firejail --private=/opt/.FireBox/ --dns=127.0.0.1 --dns=0.0.0.0 proxychains firefox -no-remote https://check.torproject.org/)
-if [ "$p3T" ]
-then
-       echo "${BWhite}[Sandfox is closed ]::${Green} OK"
-       echo "${BWhite}"
+echo "${BWhite}[SandBox is closed ]::${Green} OK"
+echo "${BWhite}"
 echo "Private Dir /opt/.FireBox/"
-nautilus /opt/.FireBox/
+/etc/init.d/privoxy stop
+echo
+/etc/init.d/tor stop
+echo
+firejail --profile=/usr/local/etc/firejail/nautilus.profile nautilus /opt/.FireBox/
 echo
 
+elif [[ $1 == '' ]]; then
+about
+firejail --private=/opt/.FireBox/ --dns=127.0.0.1 --profile=/usr/local/etc/firejail/firefox-esr.profile firefox -no-remote
 
-else
-        echo "${BWhite}[Start Sandfox ]::${Red} ERROR"
-        exit
+elif [[ $1 == '-o' ]]; then
+
+echo "${BBlue}[+][INFO]::Start ${Cyan}Owasp-Mantra ${BGreen}Sandboxed "
+echo "${White}"
+
+firejail --private=/opt/.FireBox/ --dns=127.0.0.1 owasp-mantra-ff -no-remote
+
+elif [[ $1 == '-h' ]] ; then
+
+helps
+
+elif [[ $1 == '-d' ]] ; then
+
+echo "${BBlue}[+][INFO]::Start ${Cyan}Dnscrypt-Proxy ${BGreen}Sandboxed "
+echo "${White}"
+
+#service dnscrypt-proxy restart dnscrypt.eu-dk   ventricle.us  dnscrypt.eu-nl fvz-anyone cisco fvz-anytwo adguard-dns-ns1
+#dnscrypt-proxy -R dnscrypt.eu-nl -a 127.0.0.1
+
+firejail --private=/opt/.Dns/ --profile=/usr/local/etc/firejail/dnscrypt-proxy.profile dnscrypt-proxy -R dnscrypt.eu-nl -a 127.0.0.1
+
+elif [[ $1 == '-t' ]] ; then
+echo "${BBlue} to see you directory go to cmd=> ${BGreen}cd /run/firejail/mnt/oroot/ "
+echo "${BBlue} to enter on sandboxed terminal with other terminal cmd => ${BGreen}firejail --join=firebox "
+echo "${BBlue} to close terminal sandboxed cmd => ${BGreen}exit"
+echo "${White}"
+firejail --overlay-tmpfs --private --name=firebox --noblacklist=/sbin --noblacklist=/usr/sbin
+
+
+elif [[ $1 == '-g' ]] ; then
+
+firejail --private=/opt/.Sandbox/ --profile=/usr/local/etc/firejail/google-chrome.profile google-chrome --no-sandbox --incognito
+
+elif [[ $1 == '-v' ]] ; then
+
+firejail --profile=/usr/local/etc/firejail/virtualbox.profile virtualbox
+
 fi
