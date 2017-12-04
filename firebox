@@ -112,9 +112,9 @@ echo "${BGreen}firebox -h ${BWhite} ( to see cmd help)"
 echo "${BGreen}firebox -x ${BWhite} ( to start terminator sandboxed over tor)"
 echo "${BGreen}firebox -r cmd ${BWhite} ( to run application Sandboxed)"
 echo "${BGreen}firebox -rr cmd ${BWhite} ( to run application Sandboxed over tor)"
-echo "${BGreen}firebox -s ${BWhite} ( to Start ServerWeb Port default:80 )"
-echo "${BGreen}fireecho "${BGreen}firebox -c ${BWhite} ( to Clean Sandbox One with bleachbit )"
-echo "${BGreen}fireecho "${BGreen}firebox -c2 ${BWhite} ( to Clean Other Sandbox with bleachbit )"
+echo "${BGreen}firebox -s ${BWhite} ( to Start ServerWeb Port default:80  & dir on $PyDir )"
+echo "${BGreen}firebox -c ${BWhite} ( to Clean Sandbox One with bleachbit )"
+echo "${BGreen}firebox -c2 ${BWhite} ( to Clean Other Sandbox with bleachbit )"
 
 
 }
