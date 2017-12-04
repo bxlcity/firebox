@@ -1,12 +1,29 @@
 #!/bin/bash
 
+#
 # =============================================================
 # CONFIGURATION
 # =============================================================
 
+version="v1.3"
+snet="wlan0"
+dnsip="127.0.0.1"
+sdir="/opt/.FireBox/"
+sdir2="/opt/.Sandbox/"
+mac="00:30:7b:c1:19:37"
+ocatdir="/var/lib/tor/onioncat"
+PyPort="80" #Port For Python Server ( for cmd : firefox -s ) 
+PyDir="/opt/.FireBox/www/"
+PKG_DATA_DIR="/usr/share/dnscrypt-proxy"
 
-# DNSCrypt = "adguard-dns-ns1"
-# DNSIp = "127.0.0.1"
+# =============================================================
+
+smac="--mac=$mac"
+stor="/etc/init.d/tor"
+spriv="/etc/init.d/privoxy"
+netf="--net=$snet --netfilter=/etc/firejail/nolocal.net"
+dnscrypt="firejail --private=$sdir --profile=/usr/local/etc/firejail/dnscrypt-proxy.profile dnscrypt-proxy -R"
+ocathost=$(cat $ocatdir/hostname)
 
 # =============================================================
 # COLORS
@@ -39,7 +56,7 @@ BWhite=${Bold}$(tput setaf 7)
 # FUNCTIONS
 # =============================================================
 
-  x_="______________________________________________________________________________"
+x_="______________________________________________________________________________"
 
 print_line() {
   printf "%$(tput cols)s\n"|tr ' ' '*'
@@ -54,24 +71,58 @@ print_title() {
   echo ""
 }
 
+resolver(){
+  
+  
+  RESOLVERS_FILE="${PKG_DATA_DIR}/dnscrypt-resolvers.csv"
+  RESOLVERS_FILE_TMP="${RESOLVERS_FILE}.tmp"
+
+  RESOLVERS_URL="https://download.dnscrypt.org/dnscrypt-proxy/dnscrypt-resolvers.csv"
+  RESOLVERS_SIG_URL="${RESOLVERS_URL}.minisig"
+  RESOLVERS_SIG_PUBKEY="RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3"
+
+  echo "Updating the list of public DNSCrypt resolvers..."
+  curl -L "$RESOLVERS_URL" -o "$RESOLVERS_FILE_TMP" || exit 1
+ if $(which minisign > /dev/null 2>&1); then
+  curl -L -o "$RESOLVERS_FILE_TMP.minisig" "$RESOLVERS_SIG_URL" || exit 1
+  minisign -V -P "$RESOLVERS_SIG_PUBKEY" -m "$RESOLVERS_FILE_TMP" || exit 1
+  mv -f "${RESOLVERS_FILE_TMP}.minisig" "${RESOLVERS_FILE}.minisig"
+ fi
+ mv -f "$RESOLVERS_FILE_TMP" "$RESOLVERS_FILE"
+ echo "${BGreen}Done"
+ echo "${BWhite}"
+}
+
 
 helps() {
- 
-echo "Usage : ${BGreen}firebox ${BWhite} ( start firefox sandboxed ) "
-echo "Options: ${BGreen}firebox -p ${BWhite} (to start firefox with proxychains sandboxed)"
-echo "${BGreen}firebox -o ${BWhite} ( to start owasp-mantra-ff sandboxed)"
+
+echo "Usage : ${BGreen}firebox -f ${BWhite} ( start firefox sandboxed) "
+echo "Options: ${BGreen}firebox -p cmd ${BWhite} ( to start application with proxychains sandbox /opt/.FireBox/)"
+echo "${BGreen}firebox -ff ${BWhite} ( to start firefox with proxychains sandboxed )"
+echo "${BGreen}firebox -f2 ${BWhite} ( to start firefox on other sandbox /opt/.Sandbox/ )"
+echo "${BGreen}firebox -o ${BWhite} ( to start OnionCat sandboxed)"
 echo "${BGreen}firebox -g ${BWhite} ( to start google-chrome sandboxed)"
 echo "${BGreen}firebox -v ${BWhite} ( to start virtalbox sandboxed)"
 echo "${BGreen}firebox -d ${BWhite} ( to start dnscrypt-proxy sandboxed)"
 echo "${BGreen}firebox -t ${BWhite} ( to start terminal sandboxed )"
-echo "${BGreen}firebox -g ${BWhite} ( to start google-chrome sandboxed)"
-echo "${BGreen}firebox -h ${BWhite} ( to see help )"
+echo "${BGreen}firebox -tt ${BWhite} ( to start terminal sandboxed OverlayFS )"
+echo "${BGreen}firebox -j ${BWhite} ( to join terminal sandboxed )"
+echo "${BGreen}firebox -jj ${BWhite} ( to join terminal sandboxed OverlayFS )"
+echo "${BGreen}firebox -h ${BWhite} ( to see cmd help)"
+echo "${BGreen}firebox -x ${BWhite} ( to start terminator sandboxed over tor)"
+echo "${BGreen}firebox -r cmd ${BWhite} ( to run application Sandboxed)"
+echo "${BGreen}firebox -rr cmd ${BWhite} ( to run application Sandboxed over tor)"
+echo "${BGreen}firebox -s ${BWhite} ( to Start ServerWeb Port default:80 )"
+echo "${BGreen}fireecho "${BGreen}firebox -c ${BWhite} ( to Clean Sandbox One with bleachbit )"
+echo "${BGreen}fireecho "${BGreen}firebox -c2 ${BWhite} ( to Clean Other Sandbox with bleachbit )"
+
+
 }
 
 
 about()
 {
-   print_title "${BGreen}Welcome to FireBox Browser Quick Start\n"
+   print_title "${BGreen}Welcome to FireBox Quick Start\n"
 
 echo ""
 echo "${BWhite} _/\/\____________________/\/\________________/\/\______/\/\_________________ "
@@ -83,7 +134,7 @@ echo " _________________________________________________________________/\/\/\/\
 echo ""
 echo ${White}$x_
 echo ""
-echo "${BBlue}[+][INFO]::Start ${Cyan}Firefox  ${BGreen}Sandboxed "
+echo "${BBlue}[+][INFO]::Start ${Cyan}FireBox  ${BGreen}Sandboxed "
 echo "${White}"
 }
 
@@ -91,42 +142,166 @@ pause(){
   read -p "$*"
 }
 
-if [[ ! -e /opt/.FireBox ]]; then
-            mkdir /opt/.FireBox
+
+function dnsmenu {
+choix=$(zenity --list --width=350 --height=450 --title="Chose dnscrypt-proxy to Use"\
+ --hide-header --text=""\
+ --column="1" --column="2" --column="3" \
+  1 "dnscrypt.eu-dk"       "Denmark"\
+  2 "dnscrypt.eu-nl"   "Holland"\
+  3 "dnscrypt.org-fr"      "France" \
+  4 "fvz-anyone"   "Anycast"\
+  5 "fvz-anytwo"   "Anycast"\
+  6 "cisco"   "Anycast"\
+  7 "adguard-dns-ns1"   "Anycast"\
+  8 "adguard-dns-family-ns1"      "Family Protection Anycast" \
+  9 "ovpnse"      "Sweden" \
+  10 "soltysiak"      "Poland" \
+  11 "opennic-tumabox"      "Germany" \
+  12 "ns0.dnscrypt.is"      "in Reykjavík, Iceland" \
+  13 "ipredator"      "Sweden" \
+  14 "ventricle.us"   "New York" \
+  15 "d0wn-sg-ns1"   "Singapore" \
+  16 "cs-ch"   "Switzerland" \
+  17 "SecureDNS"      "Amsterdam, Netherlands" \
+  18 "DnsCrypt-Resolvers"      "Update dnscrypt-resolvers.csv" \
+  19 "Exit"      "=>" \
+  2> /dev/null)
+
+}
+
+dnsgui(){
+while :
+do
+dnsmenu 2> /dev/null
+	if [ "$choix" = "1" ]; then
+$dnscrypt dnscrypt.eu-dk -a $dnsip
+	elif [ "$choix" = "2" ]; then
+$dnscrypt dnscrypt.eu-nl -a $dnsip
+	elif [ "$choix" = "3" ]; then
+$dnscrypt dnscrypt.org-fr -a $dnsip
+        elif [ "$choix" = "4" ]; then
+$dnscrypt fvz-anyone -a $dnsip
+        elif [ "$choix" = "5" ]; then
+$dnscrypt fvz-anytwo -a $dnsip
+        elif [ "$choix" = "6" ]; then
+$dnscrypt cisco -a $dnsip
+        elif [ "$choix" = "7" ]; then
+$dnscrypt adguard-dns-ns1 -a $dnsip
+        elif [ "$choix" = "8" ]; then
+$dnscrypt adguard-dns-family-ns1 -a $dnsip
+        elif [ "$choix" = "9" ]; then
+$dnscrypt ovpnse -a $dnsip
+        elif [ "$choix" = "10" ]; then
+$dnscrypt soltysiak -a $dnsip
+        elif [ "$choix" = "11" ]; then
+$dnscrypt opennic-tumabox -a $dnsip
+        elif [ "$choix" = "12" ]; then
+$dnscrypt ns0.dnscrypt.is -a $dnsip
+        elif [ "$choix" = "13" ]; then
+$dnscrypt ipredator -a $dnsip
+        elif [ "$choix" = "14" ]; then
+$dnscrypt ventricle.us -a $dnsip
+        elif [ "$choix" = "15" ]; then
+$dnscrypt d0wn-sg-ns1 -a $dnsip
+        elif [ "$choix" = "16" ]; then
+$dnscrypt cs-ch -a $dnsip
+        elif [ "$choix" = "17" ]; then
+$dnscrypt securedns -a $dnsip        
+        elif [ "$choix" = "18" ]; then
+resolver
+        elif [ "$choix" = "19" ]; then
+exit
+        fi
+exit
+done
+}
+
+
+
+
+
+if [[ ! -e $sdir ]]; then
+            mkdir $sdir
 fi
 
 
-if [[ $1 == '-p' ]]; then
+if [[ $1 == '-ff' ]]; then
 
 about
-/etc/init.d/tor start
-echo 
-/etc/init.d/privoxy start
+$stor start
 echo
-
-
-firejail --private=/opt/.FireBox/ --dns=127.0.0.1 --profile=/usr/local/etc/firejail/firefox-esr.profile proxychains firefox -no-remote https://check.torproject.org/ 
+$spriv start
+echo
+echo "${BWhite}[Start Firefox Sandboxed on tor]::${Green} OK"
+echo
+echo "${BWhite}[Directory Sandboxed is ]::${Green} $sdir"
+echo "${White}"
+firejail --private=$sdir --dns=$dnsip --profile=/usr/local/etc/firejail/firefox-esr.profile proxychains4 firefox -no-remote https://check.torproject.org/ 2> /dev/null
 
 echo "${BWhite}[SandBox is closed ]::${Green} OK"
 echo "${BWhite}"
-echo "Private Dir /opt/.FireBox/"
-/etc/init.d/privoxy stop
+echo "Private Dir $sdir"
+$spriv stop
 echo
-/etc/init.d/tor stop
+$stor stop
 echo
-firejail --profile=/usr/local/etc/firejail/nautilus.profile nautilus /opt/.FireBox/
+echo "Open Directory Sanboxed"
+firejail --profile=/usr/local/etc/firejail/nautilus.profile nautilus $sdir
 echo
 
-elif [[ $1 == '' ]]; then
+elif [[ $1 == '-f' ]]; then
 about
-firejail --private=/opt/.FireBox/ --dns=127.0.0.1 --profile=/usr/local/etc/firejail/firefox-esr.profile firefox -no-remote
+firejail --private=$sdir --dns=$dnsip --x11=xorg --profile=/usr/local/etc/firejail/firefox-esr.profile firefox -no-remote
+
+elif [[ $1 == '-f2' ]]; then
+
+if [[ ! -e $sdir2 ]]; then
+            mkdir $sdir2
+fi
+
+about
+firejail --private=$sdir2 --dns=$dnsip --x11=xorg --profile=/usr/local/etc/firejail/firefox-esr.profile firefox -no-remote
+
 
 elif [[ $1 == '-o' ]]; then
 
-echo "${BBlue}[+][INFO]::Start ${Cyan}Owasp-Mantra ${BGreen}Sandboxed "
+echo "${BBlue}[+][INFO]::Start ${Cyan}OnionCat ${BGreen}Sandbox-filesystem "
 echo "${White}"
 
-firejail --private=/opt/.FireBox/ --dns=127.0.0.1 owasp-mantra-ff -no-remote
+fssb -m -- ocat -B -4 $ocathost
+
+elif [[ $1 == '-s' ]]; then
+
+if [[ ! -e $PyDir ]]; then
+            mkdir $PyDir
+fi
+
+if [[ $2 == '' ]]; then
+           
+echo "${BBlue}[+][INFO]::Start ${Cyan}Server Python ${BGreen}Sandboxed "
+echo "${White}"
+echo "${Cyan}You Pad to Server File : ${BGreen}$PyDir"
+echo "${White}"
+echo "${BGreen}http://127.0.0.1:$PyPort"
+echo "${White}"
+
+firejail --private=$PyDir python -m SimpleHTTPServer $PyPort
+else
+
+echo "${BBlue}[+][INFO]::Start ${Cyan}Server Python ${BGreen}Sandboxed "
+echo "${White}"
+echo "${Cyan}You Pad to Server File : ${BGreen}$2"
+echo "${White}"
+echo "${BGreen}http://127.0.0.1:$PyPort"
+echo "${White}"
+
+firejail --private=$2 python -m SimpleHTTPServer $PyPort
+
+fi
+elif [[ $1 == '' ]] ; then
+
+helps
 
 elif [[ $1 == '-h' ]] ; then
 
@@ -138,24 +313,93 @@ echo "${BBlue}[+][INFO]::Start ${Cyan}Dnscrypt-Proxy ${BGreen}Sandboxed "
 echo "${White}"
 
 #service dnscrypt-proxy restart dnscrypt.eu-dk   ventricle.us  dnscrypt.eu-nl fvz-anyone cisco fvz-anytwo adguard-dns-ns1
-#dnscrypt-proxy -R dnscrypt.eu-nl -a 127.0.0.1
+#dnscrypt-proxy -R fvz-anyone -a 127.0.0.1
 
-firejail --private=/opt/.Dns/ --profile=/usr/local/etc/firejail/dnscrypt-proxy.profile dnscrypt-proxy -R dnscrypt.eu-nl -a 127.0.0.1
+dnsgui
 
 elif [[ $1 == '-t' ]] ; then
-echo "${BBlue} to see you directory go to cmd=> ${BGreen}cd /run/firejail/mnt/oroot/ "
-echo "${BBlue} to enter on sandboxed terminal with other terminal cmd => ${BGreen}firejail --join=firebox "
+
+echo "${BBlue} Join Sandboxed Terminal => ${BGreen}firejail --join=firebox or firebox -j"
 echo "${BBlue} to close terminal sandboxed cmd => ${BGreen}exit"
 echo "${White}"
-firejail --overlay-tmpfs --private --name=firebox --noblacklist=/sbin --noblacklist=/usr/sbin
+firejail --overlay-tmpfs --x11=xorg  --private=$sdir --profile=/usr/local/etc/firejail/lxterminal.profile --dns=$dnsip --name=firebox --noblacklist=/sbin --noblacklist=/usr/sbin
 
+elif [[ $1 == '-tt' ]] ; then
+
+echo "${BBlue} to see you directory go to cmd=> ${BGreen}cd /run/firejail/mnt/oroot/ "
+echo "${BBlue} Join Sandboxed Terminal => ${BGreen}firejail --join=firebox or firebox -j"
+echo "${BBlue} to close terminal sandboxed cmd => ${BGreen}exit"
+echo "${White}"
+#--net=$snet --netfilter=/etc/firejail/nolocal.net $smac
+firejail --overlay-tmpfs --x11=xorg --dns=$dnsip --name=fireboxs --noblacklist=/sbin --noblacklist=/usr/sbin
+
+
+elif [[ $1 == '-j' ]] ; then
+
+firejail --join=firebox
+
+elif [[ $1 == '-jj' ]] ; then
+
+firejail --join=fireboxs
 
 elif [[ $1 == '-g' ]] ; then
 
-firejail --private=/opt/.Sandbox/ --profile=/usr/local/etc/firejail/google-chrome.profile google-chrome --no-sandbox --incognito
+firejail --private=$sdir --dns=$dnsip --profile=/usr/local/etc/firejail/google-chrome.profile google-chrome --no-sandbox 2> /dev/null
 
 elif [[ $1 == '-v' ]] ; then
 
 firejail --profile=/usr/local/etc/firejail/virtualbox.profile virtualbox
+
+elif [[ $1 == '-r' ]] ; then
+
+echo
+firejail --private=$sdir --dns=$dnsip --profile=/usr/local/etc/firejail/lxterminal.profile --x11=xorg $2 $3 $4 $5 $6 $7 $8 $9
+echo
+elif [[ $1 == '-rr' ]] ; then
+$stor start
+echo
+sleep 2
+echo
+firejail --private=$sdir --dns=$dnsip --x11=xorg torsocks $2 $3 $4 $5 $6 $7 $8 $9
+echo
+$stor stop
+
+elif [[ $1 == '-x' ]] ; then
+
+$stor start
+echo
+firejail --overlay-tmpfs --profile=/usr/local/etc/firejail/lxterminal.profile --dns=127.0.0.1 --noblacklist=/sbin --noblacklist=/usr/sbin torsocks /bin/bash
+$stor stop
+echo
+
+elif [[ $1 == '-xx' ]] ; then
+
+$stor start
+echo
+
+firejail --overlay-tmpfs --x11=xorg --dns=127.0.0.1 --noblacklist=/sbin --noblacklist=/usr/sbin torsocks /bin/bash
+$stor stop
+echo
+elif [[ $1 == '-p' ]]; then
+
+$stor start
+echo
+$spriv start
+echo
+sleep 2
+echo
+firejail --private=$sdir --profile=/usr/local/etc/firejail/lxterminal.profile --dns=$dnsip --x11=xorg proxychains4 $2 $3 $4 $5 $6 $7 $8 $9 2> /dev/null
+echo
+$spriv stop
+echo
+$stor stop
+echo
+elif [[ $1 == '-c' ]]; then
+
+firejail --private=$sdir --profile=/usr/local/etc/firejail/bleachbit.profile bleachbit
+
+elif [[ $1 == '-c2' ]]; then
+
+firejail --private=$sdir2 --profile=/usr/local/etc/firejail/bleachbit.profile bleachbit
 
 fi
